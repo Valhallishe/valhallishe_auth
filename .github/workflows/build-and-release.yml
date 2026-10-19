@@ -55,7 +55,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up exact Temurin 21.0.12+8 for dependency resolution
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: '21.0.12'
@@ -138,14 +138,14 @@ jobs:
 
       - name: Install exact Temurin 25.0.4+7 for the Velocity-CTD proxy only
         id: verify-java25
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: '25.0.4+7.0.LTS'
           show-download-progress: true
 
       - name: Restore exact Temurin 21.0.12+8 as the build default
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: '21.0.12'
