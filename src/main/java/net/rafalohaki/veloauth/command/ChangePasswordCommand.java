@@ -174,6 +174,9 @@ class ChangePasswordCommand implements SimpleCommand {
         // The password commit is account-scoped and durable. Revoke UUID state before any
         // optional lookup or connection-bound effect, even when the originating connection was
         // retired while the database commit was in flight.
+        if (ctx.plugin().getRememberedSessions() != null) {
+            ctx.plugin().getRememberedSessions().revoke(playerId);
+        }
         ctx.authCache().endSession(playerId);
         ctx.authCache().removeAuthorizedPlayer(playerId);
         savePasswordChangeAudit(authCtx.username(), playerIp);

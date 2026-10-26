@@ -98,6 +98,12 @@ final class PostAuthFlow {
             return false;
         }
 
+        if (ctx.plugin().getRememberedSessions() != null) {
+            ctx.runIfConnectionCurrent(connectionOperation, () ->
+                    ctx.plugin().getRememberedSessions().remember(p.getUniqueId(),
+                            PlayerAddressUtils.getPlayerIp(p), player));
+        }
+
         // Successful offline auth: clear any lingering CONFLICT_MODE so the next connection
         // runs full UUID verification. Without this, a single conflict mark would relax UUID
         // verification forever (the pre-1.3.3 hole). Persistence happens asynchronously with

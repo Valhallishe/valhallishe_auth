@@ -1,3 +1,15 @@
+# ValhallisheAuth
+
+Fork of [VeloAuth](https://github.com/rafalohaki/VeloAuth) with configurable,
+persistent IP + UUID reconnect sessions for offline accounts.
+
+**Fork configuration and upgrade instructions: [FORK.md](FORK.md).**
+
+Upstream documentation is retained below; its statements about always requiring
+an offline password after disconnect describe upstream, not this fork.
+
+---
+
 <p align="center">
   <img src="https://cdn.modrinth.com/data/cached_images/a31eec688d48cffe2770bd961e5d134c71b8b662.png" alt="VeloAuth">
 </p>

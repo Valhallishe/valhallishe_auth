@@ -73,6 +73,9 @@ class UnregisterCommand implements SimpleCommand {
 
             boolean deleted = Boolean.TRUE.equals(deleteResult.getValue());
             if (deleted) {
+                if (ctx.plugin().getRememberedSessions() != null) {
+                    ctx.plugin().getRememberedSessions().revoke(playerUuid);
+                }
                 ctx.authCache().removeAuthorizedPlayer(playerUuid);
                 ctx.authCache().endSession(playerUuid);
                 ctx.authCache().removePremiumPlayer(nickname);

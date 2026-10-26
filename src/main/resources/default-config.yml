@@ -373,3 +373,15 @@ report:
 # language/custom, premium/Floodgate routing and whether 2FA support is enabled.
 # Nicknames, UUIDs, IP addresses, hostnames, database names and secrets are never
 # included. See README.md for chart IDs and the one-time bStats panel setup.
+
+# ValhallisheAuth: reconnect grants for password-authenticated OFFLINE accounts.
+# Both the UUID and the exact public IP must match. Premium and TOTP accounts
+# always retain their original authentication requirements.
+remembered-sessions:
+  enabled: true
+  duration-hours: 48
+  sliding-expiration: true
+  persist: true
+  revoke-on-logout: true
+  max-entries: 10000
+  excluded-players: []

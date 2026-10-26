@@ -6,10 +6,10 @@
 
     <groupId>net.rafalohaki.veloauth</groupId>
     <artifactId>veloauth</artifactId>
-    <version>1.6.2</version>
+    <version>1.6.2-valhallishe.1</version>
     <packaging>jar</packaging>
 
-    <name>VeloAuth</name>
+    <name>ValhallisheAuth</name>
     <description>Complete Velocity Authentication Plugin with BCrypt, Virtual Threads and multi-database support
     </description>
     

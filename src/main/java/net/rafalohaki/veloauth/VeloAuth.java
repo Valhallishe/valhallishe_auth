@@ -51,7 +51,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 @Plugin(
         id = "veloauth",
-        name = "VeloAuth",
+        name = "ValhallisheAuth",
         version = BuildConstants.VERSION,
         description = "Complete Velocity Authentication Plugin with BCrypt, Virtual Threads and multi-database support",
     authors = {"Rafal"},
@@ -78,6 +78,7 @@ public class VeloAuth {
     private Messages messages;
     private DatabaseManager databaseManager;
     private AuthCache authCache;
+    private net.rafalohaki.veloauth.remember.RememberedSessions rememberedSessions;
     private CommandHandler commandHandler;
     private ConnectionManager connectionManager;
     private AuthServerProvider authServerProvider;
@@ -511,6 +512,12 @@ public class VeloAuth {
                 messages
         );
         
+        try {
+            rememberedSessions = new net.rafalohaki.veloauth.remember.RememberedSessions(dataDirectory, logger);
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException("Unable to initialize remembered-session storage", e);
+        }
+
         // Set AuthCache reference in DatabaseManager for cache invalidation coordination
         if (databaseManager != null) {
             databaseManager.setAuthCacheReference(authCache);
@@ -624,6 +631,8 @@ public class VeloAuth {
             preLoginHandler, postLoginHandler, connectionManager, databaseManager, messages);
         
         server.getEventManager().register(this, authListener);
+        server.getEventManager().register(this,
+                new net.rafalohaki.veloauth.remember.RememberedSessionListener(this, rememberedSessions));
         logger.debug("✅ Event listeners registered in {} ms (PreLoginHandler + PostLoginHandler + AuthListener)", 
                 System.currentTimeMillis() - startTime);
     }
@@ -741,6 +750,9 @@ public class VeloAuth {
 
     /** Components shut down in reverse initialization order; the DB pool and VT executor go last. */
     private void shutdownComponentsInReverseOrder() {
+        if (rememberedSessions != null) {
+            rememberedSessions.close();
+        }
         if (authTimeoutScheduler != null) {
             authTimeoutScheduler.shutdown();
             logger.debug("AuthTimeoutScheduler shut down");
@@ -895,8 +907,14 @@ public class VeloAuth {
                 logger.info(messages.get("config.reloading"));
             }
 
+            // Validate fork policy before publishing either configuration.
+            var rememberPolicy = net.rafalohaki.veloauth.remember.RememberPolicy.load(
+                    dataDirectory.resolve("config.yml"));
             // Reload configuration
             boolean configReloaded = settings.load();
+            if (configReloaded && rememberedSessions != null) {
+                rememberedSessions.applyPolicy(rememberPolicy);
+            }
             
             // Reload language files
             boolean languageReloaded = reloadLanguageFiles();
@@ -919,7 +937,7 @@ public class VeloAuth {
                 return false;
             }
 
-        } catch (IllegalStateException | IllegalArgumentException e) {
+        } catch (java.io.IOException | IllegalStateException | IllegalArgumentException e) {
             // IllegalArgumentException can leak out if validation paths added in the future
             // forget to be caught inside Settings.load(); IllegalStateException covers init-order races.
             if (logger.isErrorEnabled()) {
@@ -983,6 +1001,10 @@ public class VeloAuth {
      */
     public DatabaseManager getDatabaseManager() {
         return databaseManager;
+    }
+
+    public net.rafalohaki.veloauth.remember.RememberedSessions getRememberedSessions() {
+        return rememberedSessions;
     }
 
     /**

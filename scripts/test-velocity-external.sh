@@ -14,6 +14,8 @@ JOURNEY_USERNAME="VAuthExtCanary"
 JOURNEY_PASSWORD="ExtCanary1Safe"
 SMOKE_JAVA="${VELOAUTH_SMOKE_JAVA:-java}"
 KEEP_WORKDIR="${VELOAUTH_EXTERNAL_KEEP_WORKDIR:-false}"
+REMEMBERED_SESSIONS="${VELOAUTH_REMEMBERED_SESSIONS:-false}"
+case "${REMEMBERED_SESSIONS}" in true|false) ;; *) echo "VELOAUTH_REMEMBERED_SESSIONS must be true or false" >&2; exit 1 ;; esac
 SMOKE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/veloauth-external-smoke.XXXXXX")"
 VELOCITY_PID=""
 AUTH_PID=""
@@ -216,7 +218,7 @@ umask 077
 printf '%s\n' 'veloauth-external-loopback-only-unused-secret' \
   >"${SMOKE_DIR}/velocity/forwarding.secret"
 
-cat >"${SMOKE_DIR}/velocity/plugins/veloauth/config.yml" <<'YAML'
+cat >"${SMOKE_DIR}/velocity/plugins/veloauth/config.yml" <<YAML
 language: en
 database:
   storage-type: H2
@@ -230,6 +232,8 @@ connection:
   auto-transfer-delay-ms: 1500
 report:
   enabled: false
+remembered-sessions:
+  enabled: ${REMEMBERED_SESSIONS}
 YAML
 
 mkfifo "${SMOKE_DIR}/auth.pipe" "${SMOKE_DIR}/backend.pipe" "${SMOKE_DIR}/velocity.pipe"
@@ -290,11 +294,29 @@ run_journey_phase() {
     -Dveloauth.external.password="${JOURNEY_PASSWORD}" \
     -Dveloauth.external.auth-marker="${AUTH_MARKER}" \
     -Dveloauth.external.backend-marker="${BACKEND_MARKER}" \
+    -Dveloauth.external.remembered="${REMEMBERED_SESSIONS}" \
     -Dveloauth.external.phase="${phase}" test
 }
 run_journey_phase register
 run_journey_phase login
 run_journey_phase reconnect
+
+if [[ "${REMEMBERED_SESSIONS}" == true ]]; then
+  # Verify the grant survives a real proxy restart, not just an in-memory reconnect.
+  printf 'shutdown\n' >&5
+  wait "${VELOCITY_PID}"
+  VELOCITY_PID=""
+  mv "${SMOKE_DIR}/velocity.log" "${SMOKE_DIR}/velocity-before-restart.log"
+  (
+    cd "${SMOKE_DIR}/velocity"
+    "${SMOKE_JAVA}" -Xms128m -Xmx512m -jar velocity.jar \
+      <"${SMOKE_DIR}/velocity.pipe" >"${SMOKE_DIR}/velocity.log" 2>&1
+  ) &
+  VELOCITY_PID=$!
+  wait_for_log "${VELOCITY_PID}" "${SMOKE_DIR}/velocity.log" \
+    "Ready - player connections allowed" "Velocity remembered-session restart"
+  run_journey_phase reconnect
+fi
 
 [[ "$(sha256_file "${PLUGIN_JAR}")" == "${CANDIDATE_SHA256}" ]] || {
   echo "External journey mutated the supplied VeloAuth candidate" >&2
@@ -337,6 +359,7 @@ VeloAuth external-mode journey: PASS
 candidate_sha256=${CANDIDATE_SHA256}
 velocity_sha256=${VELOCITY_SHA256}
 nanolimbo_version=1.13.0
+remembered_sessions=${REMEMBERED_SESSIONS}
 nanolimbo_sha256=${NANOLIMBO_SHA256}
 flow=auth -> register -> backend -> logout -> auth -> login -> backend -> disconnect -> auth -> login -> backend
 EOF

@@ -43,6 +43,10 @@ class LogoutCommand implements SimpleCommand {
             context.logger().error(
                     "Failed to retire logout connection for {}", username, cleanupFailure);
         }
+        if (context.plugin().getRememberedSessions() != null
+                && context.plugin().getRememberedSessions().policy().revokeOnLogout()) {
+            context.plugin().getRememberedSessions().revoke(player.getUniqueId());
+        }
         try {
             player.disconnect(context.messages().component("auth.logged_out", NamedTextColor.YELLOW));
         } catch (RuntimeException disconnectFailure) {

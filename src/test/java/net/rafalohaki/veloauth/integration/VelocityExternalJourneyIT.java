@@ -100,6 +100,14 @@ class VelocityExternalJourneyIT {
     }
 
     private void exerciseReconnect(JourneyConnection connection, String password) throws InterruptedException {
+        if (Boolean.getBoolean("veloauth.external.remembered")) {
+            assertTrue(connection.backendReached().await(TRANSFER_TIMEOUT_SECONDS, TimeUnit.SECONDS),
+                    "Remembered IP+UUID must reach backend without another password");
+            assertTrue(connection.backendBeforeCredentials().get(),
+                    "No password command should be required on remembered reconnect");
+            assertTrue(client.isConnected(), "Remembered player must remain connected");
+            return;
+        }
         assertTrue(connection.authReached().await(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS),
                 () -> "A normal reconnect must return to auth; state=" + connection.connectionFailure().get());
         assertFalse(connection.backendBeforeCredentials().get(),
