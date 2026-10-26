@@ -84,9 +84,9 @@ Upstream's real-client smoke scenarios expect reauthentication on reconnect.
 The external journey supports both policies without duplicating the upstream harness:
 
 ```sh
-VELOAUTH_PLUGIN_JAR="$PWD/target/veloauth-1.6.2-valhallishe.1.jar" \
+VELOAUTH_PLUGIN_JAR="$PWD/target/veloauth-1.6.3.jar" \
   ./scripts/test-velocity-external.sh
-VELOAUTH_PLUGIN_JAR="$PWD/target/veloauth-1.6.2-valhallishe.1.jar" \
+VELOAUTH_PLUGIN_JAR="$PWD/target/veloauth-1.6.3.jar" \
   VELOAUTH_REMEMBERED_SESSIONS=true ./scripts/test-velocity-external.sh
 ```
 
