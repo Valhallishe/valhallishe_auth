@@ -10,6 +10,7 @@ jobs:
   build:
     if: github.repository == 'Valhallishe/valhallishe_auth'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -21,6 +22,17 @@ jobs:
           cache: maven
       - name: Unit tests and package
         run: ./mvnw -B package
+      - name: External Velocity journey without remembered sessions
+        env:
+          VELOAUTH_PLUGIN_JAR: ${{ github.workspace }}/target/veloauth-1.6.3.jar
+          VELOAUTH_SMOKE_JAVA: java
+        run: ./scripts/test-velocity-external.sh
+      - name: External Velocity journey with persistent remembered sessions
+        env:
+          VELOAUTH_PLUGIN_JAR: ${{ github.workspace }}/target/veloauth-1.6.3.jar
+          VELOAUTH_SMOKE_JAVA: java
+          VELOAUTH_REMEMBERED_SESSIONS: 'true'
+        run: ./scripts/test-velocity-external.sh
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: valhallishe-auth
